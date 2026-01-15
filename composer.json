@@ -1,36 +1,36 @@
 {
-    "name": "fortytwo-studio/website-documentation",
-    "description": "Add Guides to your website to help both clients & agency",
-    "type": "craft-plugin",
-    "version": "1.5.1",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Forty Two studio",
-            "homepage": "https://fortytwo.studio"
-        }
-    ],
-    "require": {
-        "craftcms/cms": "^5.0.0"
-    },
-    "autoload": {
-        "psr-4": {
-            "fortytwostudio\\websitedocumentation\\": "src/"
-        }
-    },
-    "extra": {
-        "name": "Website Documentation",
-        "handle": "websitedocumentation",
-        "developer": "Forty Two Studio",
-        "developerUrl": "https://fortytwo.studio",
-        "documentationUrl": "https://github.com/fortytwostudio/website-documentation/blob/main/README.md",
-        "changelogUrl": "https://raw.githubusercontent.com/fortytwostudio/website-documentation/main/CHANGELOG.md",
-        "class": "fortytwostudio\\websitedocumentation\\WebsiteDocumentation"
-    },
-    "config": {
-        "allow-plugins": {
-            "yiisoft/yii2-composer": true,
-            "craftcms/plugin-installer": true
-        }
-    }
+	"name": "fortytwo-studio/website-documentation",
+	"description": "Add Guides to your website to help both clients & agency",
+	"type": "craft-plugin",
+	"version": "1.6.0",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Forty Two studio",
+			"homepage": "https://fortytwo.studio"
+		}
+	],
+	"require": {
+		"craftcms/cms": "^5.0.0"
+	},
+	"autoload": {
+		"psr-4": {
+			"fortytwostudio\\websitedocumentation\\": "src/"
+		}
+	},
+	"extra": {
+		"name": "Website Documentation",
+		"handle": "websitedocumentation",
+		"developer": "Forty Two Studio",
+		"developerUrl": "https://fortytwo.studio",
+		"documentationUrl": "https://github.com/fortytwostudio/website-documentation/blob/main/README.md",
+		"changelogUrl": "https://raw.githubusercontent.com/fortytwostudio/website-documentation/main/CHANGELOG.md",
+		"class": "fortytwostudio\\websitedocumentation\\WebsiteDocumentation"
+	},
+	"config": {
+		"allow-plugins": {
+			"yiisoft/yii2-composer": true,
+			"craftcms/plugin-installer": true
+		}
+	}
 }
