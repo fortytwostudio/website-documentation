@@ -161,6 +161,17 @@ class NavElementQuery extends ElementQuery
         if ($this->menuId) {
             $this->subQuery->andWhere(Db::parseParam('documentation_navigation_elements.menuId', $this->menuId));
         }
+        
+        // Site ID
+		if ($this->siteId) {
+			$parentNav = (new Query())
+				->select(['dn.id'])
+				->from(['dn' => '{{%documentation_navigations}}'])
+				->where(Db::parseParam('dn.siteId', $this->siteId))
+				->scalar();
+
+            $this->subQuery->andWhere(Db::parseParam('documentation_navigation_elements.menuId', $parentNav));
+        }
 
         if ($this->type) {
             $this->subQuery->andWhere(Db::parseParam('documentation_navigation_elements.type', $this->type));
