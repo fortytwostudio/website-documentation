@@ -11,9 +11,9 @@ class ReturnSettings extends Component
 	public function guideSection()
 	{
 		$settings = WebsiteDocumentation::$settings;
-		$structureName = $settings->structure ? $settings->structure : null;
+		$structure = Craft::$app->structures->getStructureByUid($settings->structureUid)?->id;
 
-		return $structureName;
+		return $structure;
 	}
 
 	public function formatContent($content)

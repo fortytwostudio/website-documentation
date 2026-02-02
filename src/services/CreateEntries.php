@@ -27,7 +27,7 @@ class CreateEntries extends Component
 
 		// Get our structure
 		$settings = WebsiteDocumentation::$plugin->getSettings();
-		$structure = $settings->structure;
+		$structure = Craft::$app->structures->getStructureByUid($settings->structureUid)?->id;
 
 		// Get all Default Entries we want to add to the structure
 		$entries = DefaultEntries::entries();
