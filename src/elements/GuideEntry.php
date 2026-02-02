@@ -43,7 +43,12 @@ class GuideEntry extends Element
 	public ?int $typeId = null;
 
 	/**
-	 * @var ?int The ID of the structure.
+	 * @var ?string The UID of the structure.
+	 */
+	public ?string $structureUid = null;
+
+	/**
+	 * @var ?string The ID of the structure.
 	 */
 	public ?int $structureId = null;
 
@@ -221,7 +226,12 @@ class GuideEntry extends Element
 		$entryType = Craft::$app->getEntries()->getEntryTypeByHandle('websiteDocumentationContent');
 		$this->_entryType = Craft::$app->getEntries()->getEntryTypeByHandle('websiteDocumentationContent');
 		$this->typeId = $entryType->id;
-		$this->structureId = WebsiteDocumentation::$settings->structure;
+		$this->structureUid = WebsiteDocumentation::$settings->structureUid;
+
+		if ($this->structureUid) {
+			$structure = Craft::$app->structures->getStructureByUid($this->structureUid);
+   			$this->structureId = $structure?->id;
+		}
 	}
 
 	/**
@@ -620,6 +630,7 @@ class GuideEntry extends Element
 		$sources = [];
 
 		$settings = WebsiteDocumentation::$plugin->getSettings();
+		$structureId = Craft::$app->structures->getStructureByUid($settings->structureUid)?->id;
 
 		$sources[] = [
 			'key' => 'guides',
@@ -627,7 +638,7 @@ class GuideEntry extends Element
 			'data' => [
 				'type' => 'structure',
 			],
-			'structureId' => $settings->structure,
+			'structureId' => $structureId,
 			'structureEditable' => true,
 		];
 

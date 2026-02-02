@@ -16,8 +16,7 @@ class Settings extends Model
 	 */
 
 	public $name = "Website Documentation";
-	public $structure;
-	public $structureExists;
+    public ?string $structureUid = null;
 	public $sites;
 
 	// Public Methods
@@ -29,8 +28,7 @@ class Settings extends Model
 	public function rules(): array
 	{
 		return [
-			["structure", "integer"],
-			["structureExists", "boolean"],
+			[['structureUid'], 'string'],
 		];
 	}
 }

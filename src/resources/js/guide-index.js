@@ -11,16 +11,27 @@ if (typeof Craft.GuideEntries === typeof undefined) {
 Craft.GuideEntries.TemplateIndex = Craft.BaseElementIndex.extend({
 	$newTemplateBtnGroup: null,
 	$newTemplateBtn: null,
+
 	init(elements, main, controller) {
-		this.on("selectSource", this.createButton.bind(this));
-		this.on("selectSite", this.createButton.bind(this));
 		this.base(elements, main, controller);
 	},
-	createButton: function () {
-		if (null === this.$source) return;
 
-		null !== this.$newTemplateBtnGroup && this.$newTemplateBtnGroup.remove(),
-			(this.$newTemplateBtnGroup = $('<div class="btngroup submit" data-wrapper/>'));
+	updateElements: function () {
+		this.base();
+
+		// After Craft updates the view (including structure view),
+		// add/refresh our button.
+		this.createButton();
+	},
+
+	createButton: function () {
+		if (this.$source === null) return;
+
+		if (this.$newTemplateBtnGroup) {
+			this.$newTemplateBtnGroup.remove();
+		}
+
+		this.$newTemplateBtnGroup = $('<div class="btngroup submit" data-wrapper/>');
 
 		this.$newTemplateBtn = Craft.ui
 			.createButton({
@@ -36,23 +47,20 @@ Craft.GuideEntries.TemplateIndex = Craft.BaseElementIndex.extend({
 
 		this.addButton(this.$newTemplateBtnGroup);
 	},
-	_createTemplate: async function () {
-		const table = this.$source.data("handle");
 
+	_createTemplate: async function () {
 		Craft.sendActionRequest("POST", "websitedocumentation/templates/create", {
 			data: {
 				siteId: this.siteId,
 				entryType: "websiteDocumentationContent",
 			},
 		}).then(({ data: table }) => {
-			document.location.href = Craft.getUrl(table.cpEditUrl, {
-				fresh: 1,
-			});
+			document.location.href = Craft.getUrl(table.cpEditUrl, { fresh: 1 });
 		});
 	},
 });
 
 Craft.registerElementIndexClass(
 	"fortytwostudio\\websitedocumentation\\elements\\GuideEntry",
-	Craft.GuideEntries.TemplateIndex,
+	Craft.GuideEntries.TemplateIndex
 );

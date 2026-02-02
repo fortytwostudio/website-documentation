@@ -20,10 +20,6 @@ class GuideIndexAsset extends AssetBundle
             CpAsset::class,
         ];
 
-		// $this->css = [
-        //     'css/dist/guide-index.min.css',
-        // ];
-
         $this->js = [
             'js/guide-index.js',
         ];

@@ -259,7 +259,7 @@ class WebsiteDocumentation extends Plugin
 		$structure = Craft::$app->getStructures()->getStructureById($structure->id);
 
 		$settings = $this->getSettings()->getAttributes();
-		$settings["structure"] = $structure->id;
+		$settings['structureUid'] = $structure->uid;
 
 		// Save!
 		Craft::$app->getPlugins()->savePluginSettings($this, $settings);
