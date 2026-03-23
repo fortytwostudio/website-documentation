@@ -12,96 +12,82 @@ use craft\models\FieldGroup;
 
 use craft\ckeditor\Plugin as CkEditor;
 use craft\ckeditor\Field as CkEditorField;
-use craft\ckeditor\CkeConfig;
 
 use Exception;
 
 class CreateField extends Component
 {
-	public static function create() : bool
+	public static function create(): bool
 	{
-        // Field Service
-        $fieldsService = Craft::$app->getFields();
+		$fieldsService = Craft::$app->getFields();
 
-        // Create Type of Field
-        $type = CkEditorField::class;
+		$toolbar = [
+			'sourceEditing',
+			'heading',
+			'bold',
+			'italic',
+			'link',
+			'|',
+			'bulletedList',
+			'numberedList',
+			'|',
+			'insertImage',
+			'|',
+			'undo',
+			'redo',
+		];
 
-        // Check if Config already exists
-        $configs = CkEditor::getInstance()->getCkeConfigs()->getAll();
+		$options = [
+			'heading' => [
+				'options' => [
+					[
+						'model' => 'paragraph',
+						'title' => 'Paragraph',
+						'class' => 'ck-heading_paragraph',
+					],
+					[
+						'model' => 'heading2',
+						'view' => 'h2',
+						'title' => 'Heading 2',
+						'class' => 'ck-heading_heading2',
+					],
+					[
+						'model' => 'heading3',
+						'view' => 'h3',
+						'title' => 'Heading 3',
+						'class' => 'ck-heading_heading3',
+					],
+				],
+			],
+		];
 
-        $oldConfig = array_filter($configs, function($item) {
-            return $item->name === 'Website Documentation';
-        });
+		$field = $fieldsService->getFieldByHandle('websiteDocumentationText');
 
-        // If it exists, lets delete it.
-        if (!empty($oldConfig)) {
-            $oldConfig = reset($oldConfig);
-            CkEditor::getInstance()->getCkeConfigs()->delete($oldConfig->uid);
-        }
+		if (!$field) {
+			$field = $fieldsService->createField([
+				'type' => CkEditorField::class,
+				'name' => 'Website Documentation Text',
+				'handle' => 'websiteDocumentationText',
+				'instructions' => '',
+				'searchable' => false,
+				'toolbar' => $toolbar,
+				'options' => $options,
+				'headingLevels' => [2, 3],
+				'availableVolumes' => '*',
+				'purifyHtml' => true,
+			]);
+		} else {
+			$field->toolbar = $toolbar;
+			$field->options = $options;
+			$field->headingLevels = [2, 3];
+			$field->availableVolumes = '*';
+			$field->purifyHtml = true;
+		}
 
-        // Config Toolbar
-        $toolbar = [
-            "sourceEditing",
-            "heading",
-            "bold",
-            "italic",
-            "link",
-            "|",
-            "bulletedList",
-            "numberedList",
-            "|",
-            "insertImage",
-            "|",
-            "undo",
-            "redo"
-        ];
+		if (!$fieldsService->saveField($field)) {
+			throw new Exception("Couldn't save field");
+		}
 
-		// Set the config for the field
-        $ckeConfig = new CkeConfig([
-            'uid' => StringHelper::UUID(),
-            'name' => "Website Documentation",
-            'toolbar' => $toolbar,
-            'headingLevels' => [2, 3],
-        ]);
-
-        // Save Config
-        if (!CkEditor::getInstance()->getCkeConfigs()->save($ckeConfig)) {
-            throw new Exception("Couldn't save CkeConfig Settings");
-        }
-
-        // Check if Field Exists
-        $fieldExists = $fieldsService->getFieldByHandle("websiteDocumentationText");
-
-        if (!$fieldExists)
-        {
-            // Create a new CKEditor field
-		    $field = $fieldsService->createField([
-			    'type' => CkEditorField::class,
-			    'id' => null,
-			    'uid' => null,
-			    'name' => 'Website Documentation Text',
-			    'handle' => 'websiteDocumentationText',
-			    'columnSuffix' => null,
-			    'instructions' => '',
-			    'searchable' => false,
-			    'ckeConfig' => $ckeConfig->uid,
-			    'availableVolumes' => '*',
-			    'purifyHtml' => '',
-		    ]);
-
-		    // Return false if the field cannot be saved
-		    if (!$fieldsService->saveField($field)) {
-			    throw new Exception("Couldn't save field");
-		    }
-        } else {
-            $fieldExists->ckeConfig = $ckeConfig->uid;
-
-            // Return false if the field cannot be saved
-		    if (!$fieldsService->saveField($fieldExists)) {
-			    throw new Exception("Couldn't save field");
-		    }
-        }
-
-        return true;
+		return true;
 	}
 }

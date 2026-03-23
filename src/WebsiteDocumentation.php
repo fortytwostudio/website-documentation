@@ -457,7 +457,7 @@ class WebsiteDocumentation extends Plugin
 				$this->getInstance()->createNavElements->createDefault();
 
 				// Create Structure
-				if (!$this->getSettings()->structure)
+				if (!$this->getSettings()->structureUid)
 				{
 					$structure = $this->createConfig();
 				}
@@ -503,7 +503,7 @@ class WebsiteDocumentation extends Plugin
 				$this->getInstance()->createNavElements->createDefault($siteId);
 
 				// Create default guide entries
-				$this->getInstance()->createEntries->create($this->getSettings()->structure, $siteId);
+				$this->getInstance()->createEntries->create($this->getSettings()->structureUid, $siteId);
 			}
 		);
 	}
