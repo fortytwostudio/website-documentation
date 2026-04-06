@@ -4,6 +4,7 @@ namespace fortytwostudio\websitedocumentation\services;
 use yii\base\Component;
 
 use Craft;
+use fortytwostudio\websitedocumentation\elements\GuideEntry;
 use fortytwostudio\websitedocumentation\WebsiteDocumentation;
 
 class ReturnSettings extends Component
@@ -11,6 +12,23 @@ class ReturnSettings extends Component
 	public function guideSection()
 	{
 		$settings = WebsiteDocumentation::$settings;
+
+		if (!$settings->structureUid) {
+			$query = GuideEntry::find()
+				->one();
+
+			if ($query->structureId)
+			{
+				$structure = Craft::$app->getStructures()->getStructureById($query->structureId);
+
+				$settings = WebsiteDocumentation::$plugin->getSettings()->getAttributes();
+				$settings['structureUid'] = $structure->uid;
+
+				// Save!
+				Craft::$app->getPlugins()->savePluginSettings(WebsiteDocumentation::$plugin, $settings);
+			}
+		}
+
 		$structure = Craft::$app->structures->getStructureByUid($settings->structureUid)?->id;
 
 		return $structure;
