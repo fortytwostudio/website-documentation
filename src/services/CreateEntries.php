@@ -15,7 +15,7 @@ use Exception;
 
 class CreateEntries extends Component
 {
-	public static function create(int $structureId, ?int $siteId = null)
+	public static function create(string $structureId, ?int $siteId = null)
 	{
 		// Get the sites
 		if ($siteId == null) {
