@@ -249,21 +249,19 @@ class WebsiteDocumentation extends Plugin
 
 	}
 
-	public function createConfig()
+	public function createConfig(): Structure
 	{
 		$structure = new Structure();
-
+	
 		Craft::$app->getStructures()->saveStructure($structure);
-
-		// We need to fetch the UID
+	
 		$structure = Craft::$app->getStructures()->getStructureById($structure->id);
-
-		$settings = $this->getSettings()->getAttributes();
+	
+		$settings = Craft::$app->getPlugins()->getPluginInfo($this->handle)['settings'] ?? [];
 		$settings['structureUid'] = $structure->uid;
-
-		// Save!
+	
 		Craft::$app->getPlugins()->savePluginSettings($this, $settings);
-
+	
 		return $structure;
 	}
 
@@ -457,10 +455,17 @@ class WebsiteDocumentation extends Plugin
 				$this->getInstance()->createNavElements->createDefault();
 
 				// Create Structure
-				if (!$this->getSettings()->structureUid)
-				{
+				$structure = null;
+
+				if (!$this->getSettings()->structureUid) {
 					$structure = $this->createConfig();
+				} else {
+					$structure = Craft::$app->getStructures()->getStructureByUid(
+						$this->getSettings()->structureUid
+					);
 				}
+				
+				$this->getInstance()->createEntries->create($structure->id);
 
 				// Add Field
 				$this->getInstance()->createField->create();

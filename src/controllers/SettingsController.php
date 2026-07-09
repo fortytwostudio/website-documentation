@@ -49,21 +49,6 @@ class SettingsController extends Controller
 		$siteId = $this->getSiteIdFromHandle($siteHandle);
 		$section = Craft::$app->request->getSegment(3);
 
-// 		if ($settings["structure"]) {
-// 			// Check if Structure Exists
-// 			$sectionRequired = Craft::$app->entries->getSectionByHandle(
-// 				StringHelper::toCamelCase($settings["structure"])
-// 			);
-//
-// 			if ($sectionRequired != null) {
-// 				$settings["structureExists"] = true;
-// 			} else {
-// 				$settings["structureExists"] = false;
-// 			}
-// 		} else {
-// 			$settings["structureExists"] = false;
-// 		}
-
 		// Basic variables
 		$variables["fullPageForm"] = true;
 		$variables["selectedSubnavItem"] = "settings";
