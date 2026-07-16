@@ -171,22 +171,53 @@ class WebsiteDocumentation extends Plugin
 					"label" => "Dashboard",
 					"url" => "website-documentation/dashboard" . $siteHandle,
 				],
-				"style-guide" => [
-					"label" => "View Style Guide",
-					"url" => $url . $docUrl . "/style-guide",
-					"external" => true,
-				],
-				"cms-guide" => [
-					"label" => "View CMS Guide",
-					"url" => $url . $docUrl . "/cms-guide",
-					"external" => true,
-				],
 			],
 		]);
+		
+		// Check if any guides should be active
+		$showStyleGuide = false;
+		$showGuideMenus = false;
+		$showCMSGuide = false;
+		$showGuideEntries = false;
+		
+		foreach ($settings['sites'] as $site) {
+			if (($site['displayStyleGuide'] ?? '') === '1') {
+				$showStyleGuide = true;
+				$showGuideMenus = true;
+			}
+		
+			if (($site['displayCmsGuide'] ?? '') === '1') {
+				$showCMSGuide = true;
+				$showGuideEntries = true;
+			}
+		
+			// Stop once we've found both.
+			if ($showStyleGuide && $showCMSGuide) {
+				break;
+			}
+		}
+			
+		// Show Style Guide
+		if ($showStyleGuide) {
+			$item["subnav"]["style-guide"] = [
+				"label" => "View Style Guide",
+				"url" => $url . $docUrl . "/style-guide",
+				"external" => true,
+			];
+		}
+		
+		// Show CMS Guide
+		if ($showCMSGuide) {
+			$item["subnav"]["cms-guide"] = [
+				"label" => "View CMS Guide",
+					"url" => $url . $docUrl . "/cms-guide",
+					"external" => true,
+			];
+		}
 
 		// Check if Menus are allowed to shown on this environment
 		$displayMenus = isset($config["displayMenus"]) ? $config["displayMenus"] : true;
-		if ($displayMenus) {
+		if ($displayMenus && $showGuideMenus) {
 			$item["subnav"]["guide-menus"] = [
 				"label" => "Guide Menus",
 				"url" => "website-documentation/menus" . $siteHandle,
@@ -194,8 +225,8 @@ class WebsiteDocumentation extends Plugin
 		}
 
 		// Check if Entries are allowed to be shown on this environment
-		$displayEntries = isset($config["displayEntries"]) ? $config["displayEntries"] : true;
-		if ($displayEntries) {
+		$displayEntries = isset($config["displayEntries"]) ? $config["displayEntries"] : true;			
+		if ($displayEntries && $showGuideEntries) {
 			$item["subnav"]["guide-entries"] = [
 				"label" => "CMS Guide Entries",
 				"url" => "website-documentation/guides" . $siteHandle,
