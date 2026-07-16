@@ -465,14 +465,12 @@ class WebsiteDocumentation extends Plugin
 					);
 				}
 				
-				$this->getInstance()->createEntries->create($structure->id);
-
 				// Add Field
 				$this->getInstance()->createField->create();
-
+				
 				// Create Entry Type
 				$this->getInstance()->createEntryType->create();
-
+								
 				// Create Entries
 				$this->getInstance()->createEntries->create($structure->id);
 

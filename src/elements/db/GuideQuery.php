@@ -38,9 +38,6 @@ class GuideQuery extends ElementQuery
 	 */
 	public function __construct($elementType, array $config = [])
 	{
-		$entryType = Craft::$app->getEntries()->getEntryTypeByHandle('websiteDocumentationContent');
-		$this->typeId = $entryType->id;
-
 		parent::__construct($elementType, $config);
 	}
 
@@ -58,23 +55,42 @@ class GuideQuery extends ElementQuery
 
 	protected function beforePrepare(): bool
 	{
+		$entryType = Craft::$app->getEntries()
+			->getEntryTypeByHandle('websiteDocumentationContent');
+	
+		if (!$entryType) {
+			return false;
+		}
+	
+		$this->typeId = $entryType->id;
+	
 		$this->joinElementTable('documentation_guide_entries');
-
+	
 		$this->query->select([
 			'documentation_guide_entries.id',
 			'documentation_guide_entries.structureId',
 			'documentation_guide_entries.parentId',
 			'documentation_guide_entries.siteId',
 		]);
-
+	
 		if ($this->structureId) {
-			$this->subQuery->andWhere(Db::parseParam('documentation_guide_entries.structureId', $this->structureId));
+			$this->subQuery->andWhere(
+				Db::parseParam(
+					'documentation_guide_entries.structureId',
+					$this->structureId
+				)
+			);
 		}
-
+	
 		if ($this->siteId) {
-			$this->subQuery->andWhere(Db::parseParam('documentation_guide_entries.siteId', $this->siteId));
+			$this->subQuery->andWhere(
+				Db::parseParam(
+					'documentation_guide_entries.siteId',
+					$this->siteId
+				)
+			);
 		}
-
+	
 		return parent::beforePrepare();
 	}
 

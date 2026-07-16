@@ -11,6 +11,8 @@ use craft\models\EntryType;
 use craft\models\FieldLayout;
 use craft\models\FieldLayoutTab;
 
+use Exception;
+
 class CreateEntryType extends Component
 {
 	public static function create()
