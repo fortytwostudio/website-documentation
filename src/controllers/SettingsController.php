@@ -78,49 +78,56 @@ class SettingsController extends Controller
 	}
 
 	/**
-	 * Save General Settings
-	 *
-	 * @return Response The rendered result
-	 * @throws \yii\web\ForbiddenHttpException
-	 */
-	public function actionSaveGeneralSettings()
+	* Save General Settings
+	*
+	* @return Response
+	* @throws \yii\web\BadRequestHttpException
+	* @throws \yii\web\ForbiddenHttpException
+	*/
+	public function actionSaveGeneralSettings(): Response
 	{
 		$this->requirePostRequest();
-		$updates = Craft::$app->getRequest()->getBodyParams();
-		$plugin = Craft::$app->getPlugins()->getPlugin("websitedocumentation");
-		$savedSettings = $plugin->settings->sites;
 
-		unset($savedSettings[$updates["siteHandle"]]);
+		$request = Craft::$app->getRequest();
+		$plugin = Craft::$app->getPlugins()->getPlugin('websitedocumentation');
+		$pluginSettings = $plugin->getSettings();
 
-		$currentSettings = [
-			$updates["siteHandle"] => [
-				"logo" => $updates["logo"],
-				"brandBgColor" => $updates["brandBgColor"],
-				"brandTextColor" => $updates["brandTextColor"],
-				"accentBgColor" => $updates["accentBgColor"],
-				"accentTextColor" => $updates["accentTextColor"],
-				"displayStyleGuide" => $updates["displayStyleGuide"],
-				"displayCmsGuide" => $updates["displayCmsGuide"],
-			],
+		$siteHandle = $request->getRequiredBodyParam('siteHandle');
+		$sites = $pluginSettings->sites ?? [];
+
+		$sites[$siteHandle] = [
+			'logo' => $request->getBodyParam('logo'),
+			'brandBgColor' => $request->getBodyParam('brandBgColor'),
+			'brandTextColor' => $request->getBodyParam('brandTextColor'),
+			'accentBgColor' => $request->getBodyParam('accentBgColor'),
+			'accentTextColor' => $request->getBodyParam('accentTextColor'),
+			'displayStyleGuide' => $request->getBodyParam(
+				'displayStyleGuide',
+				false,
+			),
+			'displayCmsGuide' => $request->getBodyParam(
+				'displayCmsGuide',
+				false,
+			),
 		];
 
-		if ($savedSettings == null) {
-			$savedSettings = [];
-		}
+		// Preserve every existing setting, including structureUid.
+		$settings = $pluginSettings->toArray();
+		$settings['sites'] = $sites;
 
-		$settings = [
-			"sites" => array_merge($currentSettings, $savedSettings),
-		];
-
-		if (
-			!Craft::$app->getPlugins()->savePluginSettings($plugin, $settings)
-		) {
-			Craft::$app
-				->getSession()
-				->setError(Craft::t("app", "Couldn't save plugin settings."));
+		if (!Craft::$app->getPlugins()->savePluginSettings($plugin, $settings)) {
+			Craft::$app->getSession()->setError(
+				Craft::t('app', 'Couldn’t save plugin settings.'),
+			);
 
 			return $this->redirectToPostedUrl();
 		}
+
+		Craft::$app->getSession()->setNotice(
+			Craft::t('app', 'Plugin settings saved.'),
+		);
+
+		return $this->redirectToPostedUrl();
 	}
 
 	// Protected Methods
