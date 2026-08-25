@@ -102,6 +102,9 @@ class WebsiteDocumentation extends Plugin
 			$this->_registerFieldLayoutListeners();
 		}
 
+		// Register Nav Element
+		$this->_registerNavElement();
+
 		// Register Widgets
 		$this->_registerDocumentationWidgets();
 
@@ -173,30 +176,30 @@ class WebsiteDocumentation extends Plugin
 				],
 			],
 		]);
-		
+
 		// Check if any guides should be active
 		$showStyleGuide = false;
 		$showGuideMenus = false;
 		$showCMSGuide = false;
 		$showGuideEntries = false;
-		
+
 		foreach ($settings['sites'] as $site) {
 			if (($site['displayStyleGuide'] ?? '') === '1') {
 				$showStyleGuide = true;
 				$showGuideMenus = true;
 			}
-		
+
 			if (($site['displayCmsGuide'] ?? '') === '1') {
 				$showCMSGuide = true;
 				$showGuideEntries = true;
 			}
-		
+
 			// Stop once we've found both.
 			if ($showStyleGuide && $showCMSGuide) {
 				break;
 			}
 		}
-			
+
 		// Show Style Guide
 		if ($showStyleGuide) {
 			$item["subnav"]["style-guide"] = [
@@ -205,7 +208,7 @@ class WebsiteDocumentation extends Plugin
 				"external" => true,
 			];
 		}
-		
+
 		// Show CMS Guide
 		if ($showCMSGuide) {
 			$item["subnav"]["cms-guide"] = [
@@ -225,7 +228,7 @@ class WebsiteDocumentation extends Plugin
 		}
 
 		// Check if Entries are allowed to be shown on this environment
-		$displayEntries = isset($config["displayEntries"]) ? $config["displayEntries"] : true;			
+		$displayEntries = isset($config["displayEntries"]) ? $config["displayEntries"] : true;
 		if ($displayEntries && $showGuideEntries) {
 			$item["subnav"]["guide-entries"] = [
 				"label" => "CMS Guide Entries",
@@ -283,16 +286,16 @@ class WebsiteDocumentation extends Plugin
 	public function createConfig(): Structure
 	{
 		$structure = new Structure();
-	
+
 		Craft::$app->getStructures()->saveStructure($structure);
-	
+
 		$structure = Craft::$app->getStructures()->getStructureById($structure->id);
-	
+
 		$settings = Craft::$app->getPlugins()->getPluginInfo($this->handle)['settings'] ?? [];
 		$settings['structureUid'] = $structure->uid;
-	
+
 		Craft::$app->getPlugins()->savePluginSettings($this, $settings);
-	
+
 		return $structure;
 	}
 
@@ -370,6 +373,20 @@ class WebsiteDocumentation extends Plugin
 				$event->fields[] = TitleField::class;
 			}
 		});
+	}
+
+	/**
+	 * @title: Register Nav element
+	 */
+	private function _registerNavElement()
+	{
+		Event::on(
+			Elements::class,
+			Elements::EVENT_REGISTER_ELEMENT_TYPES,
+			function(RegisterComponentTypesEvent $event): void {
+				$event->types[] = NavElement::class;
+			},
+		);
 	}
 
 	/**
@@ -495,13 +512,13 @@ class WebsiteDocumentation extends Plugin
 						$this->getSettings()->structureUid
 					);
 				}
-				
+
 				// Add Field
 				$this->getInstance()->createField->create();
-				
+
 				// Create Entry Type
 				$this->getInstance()->createEntryType->create();
-								
+
 				// Create Entries
 				$this->getInstance()->createEntries->create($structure->id);
 
