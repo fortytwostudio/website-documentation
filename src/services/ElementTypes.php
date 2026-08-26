@@ -4,6 +4,7 @@ namespace fortytwostudio\websitedocumentation\services;
 use fortytwostudio\websitedocumentation\base\ElementTypeUi;
 use fortytwostudio\websitedocumentation\events\RegisterElementTypeEvent;
 use fortytwostudio\websitedocumentation\elementtypes\StyleGuideType;
+use fortytwostudio\websitedocumentation\elementtypes\MatrixType;
 use fortytwostudio\websitedocumentation\elementtypes\CustomUrl;
 use fortytwostudio\websitedocumentation\elements\NavElement;
 
@@ -37,6 +38,7 @@ class ElementTypes extends Component
     {
         $nodeTypes = [
             StyleGuideType::class,
+			MatrixType::class,
         ];
 
         $event = new RegisterElementTypeEvent([

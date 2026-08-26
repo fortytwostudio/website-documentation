@@ -537,28 +537,36 @@ class WebsiteDocumentation extends Plugin
 	 * @title: After Site is added
 	 * @desc: After a site is added, we want to update some bits
 	 */
-	private function _afterSiteAdded()
-	{
-		Event::on(
-			Sites::class,
-			Sites::EVENT_AFTER_SAVE_SITE,
-			function (SiteEvent $event) {
-
-				// Get the site id
-				$siteId = $event->site->id;
-
-				// Create Menus
-				$this->getInstance()->guideMenus->createDefault($event->site->id);
-
-				// Create Default Nav Elements
-				$this->getInstance()->createNavElements->createDefault($siteId);
-
-				// Create default guide entries
-				$this->getInstance()->createEntries->create($this->getSettings()->structureUid, $siteId);
+private function _afterSiteAdded(): void
+{
+	Event::on(
+		Sites::class,
+		Sites::EVENT_AFTER_SAVE_SITE,
+		function (SiteEvent $event) {
+			// Only run when a genuinely new site is created.
+			if (!$event->isNew) {
+				return;
 			}
-		);
-	}
 
+			$siteId = $event->site->id;
+
+			$this->getInstance()
+				->guideMenus
+				->createDefault($siteId);
+
+			$this->getInstance()
+				->createNavElements
+				->createDefault($siteId);
+
+			$this->getInstance()
+				->createEntries
+				->create(
+					$this->getSettings()->structureUid,
+					$siteId,
+				);
+		},
+	);
+}
 	/**
      * Registers Twig extensions.
      */

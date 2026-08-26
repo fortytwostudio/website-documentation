@@ -8,6 +8,11 @@ use craft\web\Controller;
 use fortytwostudio\websitedocumentation\WebsiteDocumentation;
 use fortytwostudio\websitedocumentation\elements\NavElement;
 
+use craft\fields\Matrix;
+use fortytwostudio\websitedocumentation\elementtypes\MatrixType;
+use fortytwostudio\websitedocumentation\elementtypes\StyleGuideType;
+use yii\web\BadRequestHttpException;
+
 use yii\web\Response;
 
 class ElementsController extends Controller
@@ -21,6 +26,15 @@ class ElementsController extends Controller
         $this->requireAcceptsJson();
 
 		$elementsPost = $this->request->getRequiredParam('elements');
+
+		// Convert Matrix submissions into individual Style Guide elements.
+		$elementsPost = $this->_expandMatrixElements($elementsPost);
+
+		// _setElementFromPost() reads from the request body, so replace the
+		// submitted elements with the expanded collection.
+		$bodyParams = $this->request->getBodyParams();
+		$bodyParams['elements'] = $elementsPost;
+		$this->request->setBodyParams($bodyParams);
 
 		if ($elementsPost) {
 			foreach ($elementsPost as $key => $data)
@@ -67,6 +81,71 @@ class ElementsController extends Controller
 
     // Private Methods
     // =========================================================================
+
+	/**
+	* Expand Matrix generators into individual Style Guide elements.
+	*
+	* @throws BadRequestHttpException
+	*/
+	private function _expandMatrixElements(array $elements): array
+	{
+		$expandedElements = [];
+
+		foreach ($elements as $data) {
+			// Leave ordinary navigation items unchanged.
+			if (($data['type'] ?? null) !== MatrixType::class) {
+				$expandedElements[] = $data;
+				continue;
+			}
+
+			$matrixFieldId = (int) ($data['matrixFieldId'] ?? 0);
+
+			if (!$matrixFieldId) {
+				throw new BadRequestHttpException(
+					Craft::t(
+						'websitedocumentation',
+						'Please select a Matrix field.'
+					)
+				);
+			}
+
+			$matrixField = Craft::$app
+				->getFields()
+				->getFieldById($matrixFieldId);
+
+			if (!$matrixField instanceof Matrix) {
+				throw new BadRequestHttpException(
+					Craft::t(
+						'websitedocumentation',
+						'The selected field is not a Matrix field.'
+					)
+				);
+			}
+
+			$entryTypes = $matrixField->getEntryTypes();
+
+			if (!$entryTypes) {
+				throw new BadRequestHttpException(
+					Craft::t(
+						'websitedocumentation',
+						'The selected Matrix field has no entry types.'
+					)
+				);
+			}
+
+			foreach ($entryTypes as $entryType) {
+				$expandedElements[] = [
+					'parentId' => (string) ($data['parentId'] ?? '0'),
+					'title' => $entryType->name,
+					'type' => StyleGuideType::class,
+					'menuId' => (string) $data['menuId'],
+					'siteId' => (string) $data['siteId'],
+				];
+			}
+		}
+
+		return $expandedElements;
+	}
 
     private function _setElementFromPost($prefix = ''): NavElement
     {

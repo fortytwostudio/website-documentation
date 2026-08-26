@@ -2,7 +2,7 @@
 	"name": "fortytwo-studio/website-documentation",
 	"description": "Add Guides to your website to help both clients & agency",
 	"type": "craft-plugin",
-	"version": "2.8.0",
+	"version": "3.0.0",
 	"license": "MIT",
 	"authors": [
 		{

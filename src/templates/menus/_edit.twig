@@ -28,6 +28,25 @@
 {# Enforce a single source #}
 {% set sources = sources | filter(n => n.key == 'menu:' ~ menu.uid) %}
 
+{# Create the list of available Matrix fields #}
+{% set matrixFieldOptions = [
+	{
+		label: 'Select a Matrix field' | t('websitedocumentation'),
+		value: '',
+	},
+] %}
+
+{% for field in craft.app.fields.getAllFields() %}
+	{% if className(field) == 'craft\\fields\\Matrix' %}
+		{% set matrixFieldOptions = matrixFieldOptions | merge([
+			{
+				label: field.name,
+				value: field.id,
+			},
+		]) %}
+	{% endif %}
+{% endfor %}
+
 {% block pageTitle %}
 	<h1 class="screen-title" title="{{ menuTitle }}">{{ menuTitle }}</h1>
 
@@ -100,7 +119,17 @@
 									options: parentOptions,
 									class: 'fullwidth dropdown-parent-element',
 								}) }}
-
+								{% if tab.type == 'fortytwostudio\\websitedocumentation\\elementtypes\\MatrixType' %}
+									{{ forms.selectField({
+										label: 'Matrix field' | t('websitedocumentation'),
+										instructions: 'Create a navigation item for each entry type in this Matrix field.' | t('websitedocumentation'),
+										id: 'matrixFieldId',
+										name: 'matrixFieldId',
+										options: matrixFieldOptions,
+										required: true,
+										class: 'fullwidth',
+									}) }}
+								{% endif %}
 								{% if tab.nodeType.hasNewWindow() %}
 									{{ forms.lightswitchField({
 										label: 'Open in new window' | t('navigation'),

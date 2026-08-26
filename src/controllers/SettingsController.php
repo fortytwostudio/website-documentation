@@ -33,50 +33,76 @@ class SettingsController extends Controller
 	 * @throws \yii\web\ForbiddenHttpException
 	 */
 	public function actionPluginSettings(
-		string $siteHandle = null,
-		$settings = null): Response
-    {
+		?string $siteHandle = null,
+		$settings = null,
+	): Response {
 		if ($settings === null) {
 			$settings = WebsiteDocumentation::$settings;
 		}
 
 		if ($siteHandle === null) {
-            $request = Craft::$app->getRequest();
-            $siteParam = $request->getQueryParam('site');
-			$siteHandle = $siteParam ?? Craft::$app->sites->primarySite->handle;
+			$request = Craft::$app->getRequest();
+			$siteParam = $request->getQueryParam('site');
+
+			$siteHandle = $siteParam
+				?? Craft::$app->sites->primarySite->handle;
 		}
 
 		$siteId = $this->getSiteIdFromHandle($siteHandle);
 		$section = Craft::$app->request->getSegment(3);
 
-		// Basic variables
-		$variables["fullPageForm"] = true;
-		$variables["selectedSubnavItem"] = "settings";
-		$variables["settings"] = $settings;
+		// Ensure the sites setting is always an array.
+		$sites = $settings->sites ?? [];
 
-		$variables["controllerHandle"] = "settings" . "/" . $section;
-		$this->setMultiSiteVariables($siteHandle, $siteId, $variables);
+		// Default settings for a site that doesn't have saved settings yet.
+		$siteSettings = array_merge(
+			[
+				'logo' => '',
+				'brandBgColor' => '',
+				'brandTextColor' => '',
+				'accentBgColor' => '',
+				'accentTextColor' => '',
+				'displayStyleGuide' => '1',
+				'displayCmsGuide' => '1',
+			],
+			$sites[$siteHandle] ?? [],
+		);
+
+		// Make the normal settings.sites[currentSite] value safe for
+		// all the existing settings templates.
+		$settings->sites[$siteHandle] = $siteSettings;
+
+		// Basic variables
+		$variables = [];
+		$variables['fullPageForm'] = true;
+		$variables['selectedSubnavItem'] = 'settings';
+		$variables['settings'] = $settings;
+		$variables['controllerHandle'] = 'settings/' . $section;
+
+		$this->setMultiSiteVariables(
+			$siteHandle,
+			$siteId,
+			$variables,
+		);
 
 		// Logo
 		$logo = null;
 
-		if (!empty($settings->sites[$siteHandle]["logo"])) {
-            $logoId = $settings->sites[$siteHandle]["logo"];
-            $logo = Craft::$app->elements->getElementById($logoId);
+		if (!empty($siteSettings['logo'])) {
+			$logo = Craft::$app->elements->getElementById(
+				$siteSettings['logo'],
+			);
 		}
 
-		$variables["logo"] = $logo;
-
-		// Create Variable of current site
-		$variables["currentSite"] = $siteHandle;
+		$variables['logo'] = $logo;
+		$variables['currentSite'] = $siteHandle;
 
 		return $this->renderTemplate(
-			"websitedocumentation/settings/" .
-				($section ? (string) $section : ""),
-			$variables
+			'websitedocumentation/settings/' .
+				($section ? (string) $section : ''),
+			$variables,
 		);
 	}
-
 	/**
 	* Save General Settings
 	*
