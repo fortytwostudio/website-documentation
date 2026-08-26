@@ -94,12 +94,18 @@ class GuideService extends Component
 					// Step One. Check if the parent is still a file and not a folder
 					if (file_exists($filePath))
 					{
-						if (!mkdir($folderPath, 0775, true))
-						{
-							Craft::info("Couldn't convert $parentName to a folder", "website-documentation");
-							die("Failed to create folder.");
+						if (
+							!is_dir($folderPath) &&
+							!mkdir($folderPath, 0775, true) &&
+							!is_dir($folderPath)
+						) {
+							throw new \RuntimeException(
+								"Failed to create folder: {$folderPath}"
+							);
 						}
-						unlink($filePath);
+						if (is_file($filePath)) {
+							unlink($filePath);
+						}
 					}
 
 					// Step Two. Find the folder based on the file name
@@ -128,12 +134,18 @@ class GuideService extends Component
 					if ($parentIsFile)
 					{
 						$folderPath = preg_replace('/\.twig$/', '', $parentFolderPath);
-						if (!mkdir($folderPath, 0775, true))
-						{
-							Craft::info("Couldn't convert $fileName to a folder", "website-documentation");
-							die("Failed to create folder.");
+						if (
+							!is_dir($folderPath) &&
+							!mkdir($folderPath, 0775, true) &&
+							!is_dir($folderPath)
+						) {
+							throw new \RuntimeException(
+								"Failed to create folder: {$folderPath}"
+							);
 						}
-						unlink($parentFolderPath);
+						if (is_file($parentFolderPath)) {
+							unlink($parentFolderPath);
+						}
 
 						$parentFolderPath = $folderPath;
 					}
