@@ -606,7 +606,7 @@ class NavElement extends Element
                 ]);
 
                 if (!$parentElement) {
-                    throw new InvalidConfigException("Invalid element ID: $parentElement");
+                    throw new InvalidConfigException("Invalid parent element ID: $parentId");
                 }
             } else {
                 $parentElement = null;
