@@ -286,16 +286,18 @@ class WebsiteDocumentation extends Plugin
 	public function createConfig(): Structure
 	{
 		$structure = new Structure();
-
-		Craft::$app->getStructures()->saveStructure($structure);
-
-		$structure = Craft::$app->getStructures()->getStructureById($structure->id);
-
-		$settings = Craft::$app->getPlugins()->getPluginInfo($this->handle)['settings'] ?? [];
+	
+		if (!Craft::$app->getStructures()->saveStructure($structure)) {
+			throw new \RuntimeException('Unable to create the documentation structure.');
+		}
+	
+		$settings = $this->getSettings()->toArray();
 		$settings['structureUid'] = $structure->uid;
-
-		Craft::$app->getPlugins()->savePluginSettings($this, $settings);
-
+	
+		if (!Craft::$app->getPlugins()->savePluginSettings($this, $settings)) {
+			throw new \RuntimeException('Unable to save the documentation settings.');
+		}
+	
 		return $structure;
 	}
 
