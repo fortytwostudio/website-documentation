@@ -479,24 +479,27 @@ class WebsiteDocumentation extends Plugin
 			if ($event->plugin === $this) {
 
 				// Save plugin settings straight away
-				$sites = Craft::$app->sites;
-				$sites = $sites->getEditableSites();
-				$settings = [];
-
-				foreach ($sites as $site)
-				{
-					$settings[$site->handle] = [
-						"logo" => "",
-						"brandBgColor" => "",
-						"brandTextColor" => "",
-						"accentBgColor" => "",
-						"accentTextColor" => "",
-						"displayStyleGuide" => "1",
-						"displayCmsGuide" => "1",
+				$settings = $this->getSettings()->toArray();
+				$settings['sites'] = [];
+				
+				foreach (Craft::$app->getSites()->getAllSites() as $site) {
+					$settings['sites'][$site->handle] = [
+						'logo' => '',
+						'brandBgColor' => '',
+						'brandTextColor' => '',
+						'accentBgColor' => '',
+						'accentTextColor' => '',
+						'displayStyleGuide' => '1',
+						'displayCmsGuide' => '1',
 					];
 				}
-
-				Craft::$app->getPlugins()->savePluginSettings($this, ['sites' => $settings]);
+				
+				if (!Craft::$app->getPlugins()->savePluginSettings($this, $settings)) {
+					throw new \RuntimeException(
+						'Unable to save documentation settings: ' .
+						json_encode($this->getSettings()->getErrors())
+					);
+				}
 
 				// Create Menus
 				$this->getInstance()->guideMenus->createDefault();
