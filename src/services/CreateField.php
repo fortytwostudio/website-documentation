@@ -20,6 +20,10 @@ class CreateField extends Component
 	public static function create(): bool
 	{
 		$fieldsService = Craft::$app->getFields();
+			
+		if ($fieldsService->getFieldByHandle('websiteDocumentationText')) {
+			return true;
+		}
 
 		$toolbar = [
 			'sourceEditing',
