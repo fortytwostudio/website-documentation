@@ -17,7 +17,7 @@ class Settings extends Model
 
 	public $name = "Website Documentation";
     public ?string $structureUid = null;
-	public $sites;
+	public $sites = [];
 
 	// Public Methods
 	// =========================================================================

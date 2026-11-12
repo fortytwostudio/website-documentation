@@ -15,19 +15,18 @@ use Exception;
 
 class CreateEntries extends Component
 {
-	public static function create(string $structureId, ?int $siteId = null)
+	public static function create(int $structureId, ?int $siteId = null)
 	{
 		// Get the sites
 		if ($siteId == null) {
 			$sites = Craft::$app->getSites();
-			$editableSites = $sites->getEditableSiteIds();
+			$editableSites = $sites->getAllSiteIds();
 		} else {
 			$editableSites = [$siteId];
 		}
 
 		// Get our structure
-		$settings = WebsiteDocumentation::$plugin->getSettings();
-		$structure = Craft::$app->structures->getStructureByUid($settings->structureUid)?->id;
+		$structure = $structureId;
 
 		// Get all Default Entries we want to add to the structure
 		$entries = DefaultEntries::entries();
@@ -44,7 +43,7 @@ class CreateEntries extends Component
 
 			if (!empty($entriesExist))
 			{
-				return true;
+				continue;
 			}
 
 			// Loop through the entries so we can create them
@@ -87,6 +86,7 @@ class CreateEntries extends Component
 					foreach ($item['children'] as $child) {
 						// Create a new element
 						$childEntry = new GuideEntry([
+							'structureId' => $structure,
 							'siteId' => $siteId, // Ensure it's only being saved for this site
 							'title' => $child,
 							'parentId' => $entry->id,

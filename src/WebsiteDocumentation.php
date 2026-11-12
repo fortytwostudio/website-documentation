@@ -183,7 +183,7 @@ class WebsiteDocumentation extends Plugin
 		$showCMSGuide = false;
 		$showGuideEntries = false;
 
-		foreach ($settings['sites'] as $site) {
+		foreach ($settings->sites ?? [] as $site) {
 			if (($site['displayStyleGuide'] ?? '') === '1') {
 				$showStyleGuide = true;
 				$showGuideMenus = true;
@@ -285,20 +285,57 @@ class WebsiteDocumentation extends Plugin
 
 	public function createConfig(): Structure
 	{
-		$structure = new Structure();
-	
-		if (!Craft::$app->getStructures()->saveStructure($structure)) {
-			throw new \RuntimeException('Unable to create the documentation structure.');
-		}
-	
+		$structures = Craft::$app->getStructures();
 		$settings = $this->getSettings()->toArray();
-		$settings['structureUid'] = $structure->uid;
-	
-		if (!Craft::$app->getPlugins()->savePluginSettings($this, $settings)) {
-			throw new \RuntimeException('Unable to save the documentation settings.');
+		$uid = $settings['structureUid'] ?? null;
+		$structure = $uid ? $structures->getStructureByUid($uid) : null;
+
+		if (!$structure) {
+			// Preserve a configured UID when installing into a fresh database.
+			$structure = new Structure();
+			if ($uid) {
+				$structure->uid = $uid;
+			}
+
+			if (!$structures->saveStructure($structure)) {
+				throw new \RuntimeException('Unable to create the documentation structure.');
+			}
+
+			// saveStructure() sets the ID, but does not copy the generated UID back.
+			$structure = $structures->getStructureById($structure->id);
 		}
-	
+
+		if (!$structure || !$structure->uid) {
+			throw new \RuntimeException('Unable to retrieve the documentation structure UID.');
+		}
+
+		$settings['structureUid'] = $structure->uid;
+		$this->saveDocumentationSettings($settings);
+
 		return $structure;
+	}
+
+	private function saveDocumentationSettings(array $settings): void
+	{
+		if (!Craft::$app->getPlugins()->savePluginSettings($this, $settings)) {
+			throw new \RuntimeException(
+				'Unable to save documentation settings: ' .
+				json_encode($this->getSettings()->getErrors())
+			);
+		}
+	}
+
+	private function defaultSiteSettings(): array
+	{
+		return [
+			'logo' => '',
+			'brandBgColor' => '',
+			'brandTextColor' => '',
+			'accentBgColor' => '',
+			'accentTextColor' => '',
+			'displayStyleGuide' => '1',
+			'displayCmsGuide' => '1',
+		];
 	}
 
 	// Protected Methods
@@ -469,109 +506,74 @@ class WebsiteDocumentation extends Plugin
 	 * @title: After Install
 	 * @desc: Create the default menus for all sites when installed and add field & entry type
 	 */
-	private function _afterInstall()
+	private function _afterInstall(): void
 	{
-		Event::on(
-		Plugins::class,
-		Plugins::EVENT_AFTER_INSTALL_PLUGIN,
-		function(PluginEvent $event)
-		{
-			if ($event->plugin === $this) {
+		Event::on(Plugins::class, Plugins::EVENT_AFTER_INSTALL_PLUGIN, function (PluginEvent $event) {
+			if ($event->plugin !== $this) {
+				return;
+			}
 
-				// Save plugin settings straight away
-				$settings = $this->getSettings()->toArray();
-				$settings['sites'] = [];
-				
-				foreach (Craft::$app->getSites()->getAllSites() as $site) {
-					$settings['sites'][$site->handle] = [
-						'logo' => '',
-						'brandBgColor' => '',
-						'brandTextColor' => '',
-						'accentBgColor' => '',
-						'accentTextColor' => '',
-						'displayStyleGuide' => '1',
-						'displayCmsGuide' => '1',
-					];
-				}
-				
-				if (!Craft::$app->getPlugins()->savePluginSettings($this, $settings)) {
-					throw new \RuntimeException(
-						'Unable to save documentation settings: ' .
-						json_encode($this->getSettings()->getErrors())
-					);
-				}
+			$settings = $this->getSettings()->toArray();
+			$settings['sites'] ??= [];
 
-				// Create Menus
-				$this->getInstance()->guideMenus->createDefault();
+			foreach (Craft::$app->getSites()->getAllSites() as $site) {
+				$settings['sites'][$site->handle] = array_replace(
+					$this->defaultSiteSettings(),
+					$settings['sites'][$site->handle] ?? []
+				);
+			}
 
-				// Create Default Nav Elements
-				$this->getInstance()->createNavElements->createDefault();
+			$this->saveDocumentationSettings($settings);
+			$structure = $this->createConfig();
 
-				// Create Structure
-				$structure = null;
+			// Complete the dependencies before creating any guide elements.
+			$this->createField->create();
+			$this->createEntryType->create();
+			$this->guideMenus->createDefault();
+			$this->createNavElements->createDefault();
+			$this->createEntries->create($structure->id);
 
-				if (!$this->getSettings()->structureUid) {
-					$structure = $this->createConfig();
-				} else {
-					$structure = Craft::$app->getStructures()->getStructureByUid(
-						$this->getSettings()->structureUid
-					);
-				}
-
-				// Add Field
-				$this->getInstance()->createField->create();
-
-				// Create Entry Type
-				$this->getInstance()->createEntryType->create();
-
-				// Create Entries
-				$this->getInstance()->createEntries->create($structure->id);
-
-				// Redirect to the settings
-				$request = Craft::$app->getRequest();
-				if ($request->isCpRequest) {
-					Craft::$app->getResponse()->redirect(UrlHelper::cpUrl(
-						'website-documentation/settings'
-					))->send();
-				}
+			if (Craft::$app->getRequest()->getIsCpRequest()) {
+				Craft::$app->getResponse()->redirect(
+					UrlHelper::cpUrl('website-documentation/settings')
+				)->send();
 			}
 		});
 	}
 
 	/**
-	 * @title: After Site is added
-	 * @desc: After a site is added, we want to update some bits
+	 * Initialise documentation for sites added after plugin setup is complete.
 	 */
-private function _afterSiteAdded(): void
-{
-	Event::on(
-		Sites::class,
-		Sites::EVENT_AFTER_SAVE_SITE,
-		function (SiteEvent $event) {
-			// Only run when a genuinely new site is created.
+	private function _afterSiteAdded(): void
+	{
+		Event::on(Sites::class, Sites::EVENT_AFTER_SAVE_SITE, function (SiteEvent $event) {
 			if (!$event->isNew) {
 				return;
 			}
 
-			$siteId = $event->site->id;
+			$uid = $this->getSettings()->structureUid;
+			$structure = $uid ? Craft::$app->getStructures()->getStructureByUid($uid) : null;
 
-			$this->getInstance()
-				->guideMenus
-				->createDefault($siteId);
+			// During initial setup the install handler creates these dependencies.
+			if (!$structure || !Craft::$app->getEntries()->getEntryTypeByHandle('websiteDocumentationContent')) {
+				return;
+			}
 
-			$this->getInstance()
-				->createNavElements
-				->createDefault($siteId);
+			$site = $event->site;
+			$settings = $this->getSettings()->toArray();
+			$settings['sites'] ??= [];
+			$settings['sites'][$site->handle] = array_replace(
+				$this->defaultSiteSettings(),
+				$settings['sites'][$site->handle] ?? []
+			);
+			$this->saveDocumentationSettings($settings);
 
-			$this->getInstance()
-				->createEntries
-				->create(
-					$this->getSettings()->structureUid,
-					$siteId,
-				);
-		},
-	);
-}
+			$this->guideMenus->createDefault($site->id);
+			$this->createNavElements->createDefault($site->id);
+			$this->createEntries->create($structure->id, $site->id);
+		});
+	}
+
 	/**
      * Registers Twig extensions.
      */

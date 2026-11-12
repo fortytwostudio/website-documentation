@@ -41,7 +41,7 @@ class Menus extends Component
 		// Get the sites
 		if ($siteId == null) {
 			$sites = Craft::$app->getSites();
-			$editableSites = $sites->getEditableSiteIds();
+			$editableSites = $sites->getAllSiteIds();
 		} else {
 			$editableSites = [$siteId];
 		}

@@ -460,7 +460,7 @@ class GuideEntry extends Element
 			$lastElement = $this;
 
 			foreach ($drafts as $draft) {
-				$structuresService->moveAfter($section->structureId, $draft, $lastElement);
+				$structuresService->moveAfter($structureId, $draft, $lastElement);
 				$lastElement = $draft;
 			}
 		}
@@ -630,7 +630,9 @@ class GuideEntry extends Element
 		$sources = [];
 
 		$settings = WebsiteDocumentation::$plugin->getSettings();
-		$structureId = Craft::$app->structures->getStructureByUid($settings->structureUid)?->id;
+		$structureId = $settings->structureUid
+			? Craft::$app->structures->getStructureByUid($settings->structureUid)?->id
+			: null;
 
 		$sources[] = [
 			'key' => 'guides',
